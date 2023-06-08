@@ -3,6 +3,10 @@ package main
 import (
 	"fmt"
 	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awss3"
+	"github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2"
 	"log"
 	"os"
 
@@ -32,6 +36,53 @@ func NewImageResizerStack(scope constructs.Construct, id string, props *ImageRes
 	return stack
 }
 
+type GoCdkStackProps struct {
+	awscdk.StackProps
+}
+
+func NewGoCdkStack(scope constructs.Construct, id string, props *GoCdkStackProps) (stack awscdk.Stack) {
+	var stackProps awscdk.StackProps
+
+	if props != nil {
+		stackProps = props.StackProps
+	}
+
+	stack = awscdk.NewStack(scope, &id, &stackProps)
+
+	// Get the original bucket by ARN from the environment variable
+	originalBucketArn := os.Getenv("ORIGINAL_BUCKET_ARN")
+	awss3.Bucket_FromBucketArn(stack, jsii.String("OriginalBucket"), jsii.String(originalBucketArn))
+
+	// Create a role for the Lambda function
+	lambdaRole := awsiam.NewRole(stack, jsii.String("LambdaRole"), &awsiam.RoleProps{
+		AssumedBy: awsiam.NewServicePrincipal(jsii.String("lambda.amazonaws.com"), nil),
+	})
+
+	// Create a policy for the role allowing read access to the original bucket
+	originalBucketReadAccessPolicy := awsiam.NewPolicy(stack, jsii.String("OriginalBucketReadAcessPolicy"), &awsiam.PolicyProps{
+		Statements: &[]awsiam.PolicyStatement{
+			awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
+				Actions: &[]*string{
+					jsii.String("s3:GetObject"),
+				},
+				Effect: awsiam.Effect_ALLOW,
+				Resources: &[]*string{
+					jsii.String(originalBucketArn + "/*"),
+				},
+			}),
+		},
+	})
+
+	lambdaRole.AttachInlinePolicy(originalBucketReadAccessPolicy)
+
+	awscdklambdagoalpha.NewGoFunction(stack, jsii.String("ImageProcessor"), &awscdklambdagoalpha.GoFunctionProps{
+		Runtime: awslambda.Runtime_GO_1_X(),
+		Entry:   jsii.String("lambda"),
+	})
+
+	return
+}
+
 var requiredEnvVars = []string{"ORIGINAL_BUCKET_ARN"}
 
 func main() {
@@ -47,6 +98,12 @@ func main() {
 	NewImageResizerStack(app, "ImageResizerStack", &ImageResizerStackProps{
 		awscdk.StackProps{
 			Env: env(),
+		},
+	})
+
+	NewGoCdkStack(app, "ImageProcessorStack", &GoCdkStackProps{
+		awscdk.StackProps{
+			Env: nil,
 		},
 	})
 
