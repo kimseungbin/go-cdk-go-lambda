@@ -1,7 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"github.com/aws/aws-cdk-go/awscdk/v2"
+	"log"
+	"os"
+
 	// "github.com/aws/aws-cdk-go/awscdk/v2/awssqs"
 	"github.com/aws/constructs-go/constructs/v10"
 	"github.com/aws/jsii-runtime-go"
@@ -28,7 +32,14 @@ func NewImageResizerStack(scope constructs.Construct, id string, props *ImageRes
 	return stack
 }
 
+var requiredEnvVars = []string{"ORIGINAL_BUCKET_ARN"}
+
 func main() {
+	err := checkRequiredEnvVars(requiredEnvVars)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	defer jsii.Close()
 
 	app := awscdk.NewApp(nil)
@@ -67,4 +78,21 @@ func env() *awscdk.Environment {
 	//  Account: jsii.String(os.Getenv("CDK_DEFAULT_ACCOUNT")),
 	//  Region:  jsii.String(os.Getenv("CDK_DEFAULT_REGION")),
 	// }
+}
+
+// checkRequiredEnvVars checks that all required environment variables are set.
+func checkRequiredEnvVars(requiredEnvVars []string) (err error) {
+	var missingVars []string
+
+	for _, envVar := range requiredEnvVars {
+		if _, isExist := os.LookupEnv(envVar); !isExist {
+			missingVars = append(missingVars, envVar)
+		}
+	}
+
+	if len(missingVars) > 0 {
+		return fmt.Errorf("missing required environment variables: %v", missingVars)
+	}
+
+	return
 }
