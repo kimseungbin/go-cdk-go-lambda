@@ -15,27 +15,6 @@ import (
 	"github.com/aws/jsii-runtime-go"
 )
 
-type ImageResizerStackProps struct {
-	awscdk.StackProps
-}
-
-func NewImageResizerStack(scope constructs.Construct, id string, props *ImageResizerStackProps) awscdk.Stack {
-	var stackProps awscdk.StackProps
-	if props != nil {
-		stackProps = props.StackProps
-	}
-	stack := awscdk.NewStack(scope, &id, &stackProps)
-
-	// The code that defines your stack goes here
-
-	// example resource
-	// queue := awssqs.NewQueue(stack, jsii.String("ImageResizerQueue"), &awssqs.QueueProps{
-	// 	VisibilityTimeout: awscdk.Duration_Seconds(jsii.Number(300)),
-	// })
-
-	return stack
-}
-
 type GoCdkStackProps struct {
 	awscdk.StackProps
 }
@@ -94,12 +73,6 @@ func main() {
 	defer jsii.Close()
 
 	app := awscdk.NewApp(nil)
-
-	NewImageResizerStack(app, "ImageResizerStack", &ImageResizerStackProps{
-		awscdk.StackProps{
-			Env: env(),
-		},
-	})
 
 	NewGoCdkStack(app, "ImageProcessorStack", &GoCdkStackProps{
 		awscdk.StackProps{
