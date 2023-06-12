@@ -30,7 +30,10 @@ func NewGoCdkStack(scope constructs.Construct, id string, props *GoCdkStackProps
 
 	// Get the original bucket by ARN from the environment variable
 	originalBucketArn := os.Getenv("ORIGINAL_BUCKET_ARN")
-	awss3.Bucket_FromBucketArn(stack, jsii.String("OriginalBucket"), jsii.String(originalBucketArn))
+	originalBucket := awss3.Bucket_FromBucketArn(stack, jsii.String("OriginalBucket"), jsii.String(originalBucketArn))
+
+	resizedBucketArn := os.Getenv("RESIZED_BUCKET_ARN")
+	awss3.Bucket_FromBucketArn(stack, jsii.String("ResizedBucket"), jsii.String(resizedBucketArn))
 
 	// Create a role for the Lambda function
 	lambdaRole := awsiam.NewRole(stack, jsii.String("LambdaRole"), &awsiam.RoleProps{
@@ -62,7 +65,7 @@ func NewGoCdkStack(scope constructs.Construct, id string, props *GoCdkStackProps
 	return
 }
 
-var requiredEnvVars = []string{"ORIGINAL_BUCKET_ARN"}
+var requiredEnvVars = []string{"ORIGINAL_BUCKET_ARN", "RESIZED_BUCKET_ARN"}
 
 func main() {
 	err := checkRequiredEnvVars(requiredEnvVars)
