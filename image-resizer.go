@@ -69,6 +69,8 @@ func NewGoCdkStack(scope constructs.Construct, id string, props *GoCdkStackProps
 	lambdaDestination := awss3notifications.NewLambdaDestination(lambda)
 	originalBucket.AddEventNotification(awss3.EventType_OBJECT_CREATED, lambdaDestination)
 
+	originalBucket.GrantRead(lambda, "*")
+	resizedBucket.GrantReadWrite(lambda, "*")
 	return
 }
 
