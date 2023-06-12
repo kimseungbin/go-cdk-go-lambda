@@ -34,7 +34,7 @@ func NewGoCdkStack(scope constructs.Construct, id string, props *GoCdkStackProps
 	originalBucket := awss3.Bucket_FromBucketArn(stack, jsii.String("OriginalBucket"), jsii.String(originalBucketArn))
 
 	resizedBucketArn := os.Getenv("RESIZED_BUCKET_ARN")
-	awss3.Bucket_FromBucketArn(stack, jsii.String("ResizedBucket"), jsii.String(resizedBucketArn))
+	resizedBucket := awss3.Bucket_FromBucketArn(stack, jsii.String("ResizedBucket"), jsii.String(resizedBucketArn))
 
 	// Create a role for the Lambda function
 	lambdaRole := awsiam.NewRole(stack, jsii.String("LambdaRole"), &awsiam.RoleProps{
@@ -61,6 +61,9 @@ func NewGoCdkStack(scope constructs.Construct, id string, props *GoCdkStackProps
 	lambda := awscdklambdagoalpha.NewGoFunction(stack, jsii.String("ImageProcessor"), &awscdklambdagoalpha.GoFunctionProps{
 		Runtime: awslambda.Runtime_GO_1_X(),
 		Entry:   jsii.String("lambda"),
+		Environment: &map[string]*string{
+			"RESIZED_BUCKET_NAME": resizedBucket.BucketName(),
+		},
 	})
 
 	lambdaDestination := awss3notifications.NewLambdaDestination(lambda)
