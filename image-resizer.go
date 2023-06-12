@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"github.com/aws/aws-cdk-go/awscdk/v2"
-	"github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awss3"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awss3notifications"
@@ -35,28 +34,6 @@ func NewGoCdkStack(scope constructs.Construct, id string, props *GoCdkStackProps
 
 	resizedBucketArn := os.Getenv("RESIZED_BUCKET_ARN")
 	resizedBucket := awss3.Bucket_FromBucketArn(stack, jsii.String("ResizedBucket"), jsii.String(resizedBucketArn))
-
-	// Create a role for the Lambda function
-	lambdaRole := awsiam.NewRole(stack, jsii.String("LambdaRole"), &awsiam.RoleProps{
-		AssumedBy: awsiam.NewServicePrincipal(jsii.String("lambda.amazonaws.com"), nil),
-	})
-
-	// Create a policy for the role allowing read access to the original bucket
-	originalBucketReadAccessPolicy := awsiam.NewPolicy(stack, jsii.String("OriginalBucketReadAcessPolicy"), &awsiam.PolicyProps{
-		Statements: &[]awsiam.PolicyStatement{
-			awsiam.NewPolicyStatement(&awsiam.PolicyStatementProps{
-				Actions: &[]*string{
-					jsii.String("s3:GetObject"),
-				},
-				Effect: awsiam.Effect_ALLOW,
-				Resources: &[]*string{
-					jsii.String(originalBucketArn + "/*"),
-				},
-			}),
-		},
-	})
-
-	lambdaRole.AttachInlinePolicy(originalBucketReadAccessPolicy)
 
 	lambda := awscdklambdagoalpha.NewGoFunction(stack, jsii.String("ImageProcessor"), &awscdklambdagoalpha.GoFunctionProps{
 		Runtime: awslambda.Runtime_GO_1_X(),
