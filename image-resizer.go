@@ -6,6 +6,7 @@ import (
 	"github.com/aws/aws-cdk-go/awscdk/v2/awsiam"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awslambda"
 	"github.com/aws/aws-cdk-go/awscdk/v2/awss3"
+	"github.com/aws/aws-cdk-go/awscdk/v2/awss3notifications"
 	"github.com/aws/aws-cdk-go/awscdklambdagoalpha/v2"
 	"log"
 	"os"
@@ -57,10 +58,13 @@ func NewGoCdkStack(scope constructs.Construct, id string, props *GoCdkStackProps
 
 	lambdaRole.AttachInlinePolicy(originalBucketReadAccessPolicy)
 
-	awscdklambdagoalpha.NewGoFunction(stack, jsii.String("ImageProcessor"), &awscdklambdagoalpha.GoFunctionProps{
+	lambda := awscdklambdagoalpha.NewGoFunction(stack, jsii.String("ImageProcessor"), &awscdklambdagoalpha.GoFunctionProps{
 		Runtime: awslambda.Runtime_GO_1_X(),
 		Entry:   jsii.String("lambda"),
 	})
+
+	lambdaDestination := awss3notifications.NewLambdaDestination(lambda)
+	originalBucket.AddEventNotification(awss3.EventType_OBJECT_CREATED, lambdaDestination)
 
 	return
 }
