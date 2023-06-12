@@ -8,9 +8,9 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
+	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 func handler(ctx context.Context, s3Event events.S3Event) (err error) {
@@ -31,14 +31,33 @@ func handler(ctx context.Context, s3Event events.S3Event) (err error) {
 	// Create a new AWS session
 	sess := session.Must(session.NewSession())
 
-	// Create an S3 client
-	s3client := s3.New(sess)
+	// Create an S3 downloader
+	downloader := s3manager.NewDownloader(sess)
 
-	// Copy the object to the destination bucket
-	_, err = s3client.CopyObjectWithContext(ctx, &s3.CopyObjectInput{
-		CopySource: aws.String(strings.Join([]string{sourceBucket, sourceKey}, "/")),
-		Bucket:     aws.String(destinationBucket),
-		Key:        aws.String(sourceKey),
+	// Copy the object to a local file
+	tempFilePath := "/tmp/" + sourceKey
+	file, err := os.Create(tempFilePath)
+	if err != nil {
+		return
+	}
+	defer file.Close()
+
+	_, err = downloader.DownloadWithContext(ctx, file, &s3.GetObjectInput{
+		Bucket: aws.String(sourceBucket),
+		Key:    aws.String(sourceKey),
+	})
+	if err != nil {
+		return err
+	}
+
+	// Resize image
+
+	// Upload the resized image to the destination bucket
+	uploader := s3manager.NewUploader(sess)
+	_, err = uploader.Upload(&s3manager.UploadInput{
+		Bucket: aws.String(destinationBucket),
+		Key:    aws.String(sourceKey),
+		Body:   file,
 	})
 	if err != nil {
 		return
