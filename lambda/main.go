@@ -9,6 +9,7 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -19,7 +20,13 @@ func handler(ctx context.Context, s3Event events.S3Event) (err error) {
 
 	destinationBucket := os.Getenv("RESIZED_BUCKET_NAME")
 
-	fmt.Printf("Copy %s", sourceKey)
+	// Check if the file has the desired extension
+	desiredExtensions := []string{".jpg", ".jpeg", ".png"} // todo consider extracting it by env var
+	extension := filepath.Ext(sourceKey)
+	if !contains(desiredExtensions, extension) {
+		fmt.Printf("Skipping file %s as it doesn't have a valid extension", sourceKey)
+		return
+	}
 
 	// Create a new AWS session
 	sess := session.Must(session.NewSession())
@@ -43,4 +50,14 @@ func handler(ctx context.Context, s3Event events.S3Event) (err error) {
 }
 func main() {
 	lambda.Start(handler)
+}
+
+// Helper function to check if a slice contains a given string
+func contains(slice []string, str string) bool {
+	for _, item := range slice {
+		if item == str {
+			return true
+		}
+	}
+	return false
 }
