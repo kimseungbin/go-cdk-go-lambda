@@ -13,6 +13,8 @@ import (
 	"path/filepath"
 )
 
+var tempFilePath = "/tmp/file"
+
 func handler(ctx context.Context, s3Event events.S3Event) (err error) {
 	s3EventRecord := s3Event.Records[0].S3
 	sourceBucket := s3EventRecord.Bucket.Name
@@ -35,7 +37,6 @@ func handler(ctx context.Context, s3Event events.S3Event) (err error) {
 	downloader := s3manager.NewDownloader(sess)
 
 	// Copy the object to a local file
-	tempFilePath := "/tmp/" + "file"
 	file, err := os.Create(tempFilePath)
 	if err != nil {
 		return
