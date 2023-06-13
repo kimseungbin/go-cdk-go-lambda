@@ -41,6 +41,7 @@ func NewGoCdkStack(scope constructs.Construct, id string, props *GoCdkStackProps
 		Environment: &map[string]*string{
 			"RESIZED_BUCKET_NAME": resizedBucket.BucketName(),
 		},
+		Timeout: awscdk.Duration_Seconds(jsii.Number(900)),
 	})
 
 	lambdaDestination := awss3notifications.NewLambdaDestination(lambda)
