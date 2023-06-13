@@ -16,6 +16,9 @@ import (
 )
 
 var tempFilePath = "/tmp/file"
+
+// resizedFilePath must end with one of the known image file extensions due to the limits of "imaging" library.
+// However, it does not affect the actual extension of the file.
 var resizedFilePath = "/tmp/resized.jpeg"
 
 func handler(ctx context.Context, s3Event events.S3Event) (err error) {
