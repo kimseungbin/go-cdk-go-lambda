@@ -9,11 +9,14 @@ import (
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
+	"github.com/disintegration/imaging"
+	"log"
 	"os"
 	"path/filepath"
 )
 
 var tempFilePath = "/tmp/file"
+var resizedFilePath = "/tmp/resized.jpeg"
 
 func handler(ctx context.Context, s3Event events.S3Event) (err error) {
 	s3EventRecord := s3Event.Records[0].S3
@@ -52,13 +55,20 @@ func handler(ctx context.Context, s3Event events.S3Event) (err error) {
 	}
 
 	// Resize image
+	resize()
+
+	resized, err := os.Open(resizedFilePath)
+	if err != nil {
+		return err
+	}
+	defer resized.Close()
 
 	// Upload the resized image to the destination bucket
 	uploader := s3manager.NewUploader(sess)
 	_, err = uploader.Upload(&s3manager.UploadInput{
 		Bucket: aws.String(destinationBucket),
 		Key:    aws.String(sourceKey),
-		Body:   file,
+		Body:   resized,
 	})
 	if err != nil {
 		return
@@ -80,4 +90,19 @@ func contains(slice []string, str string) bool {
 		}
 	}
 	return false
+}
+
+func resize() {
+	fmt.Println("Resizing start")
+	image, err := imaging.Open(tempFilePath)
+	if err != nil {
+		log.Fatalf("Error while loading image file: %v", err)
+	}
+
+	resized := imaging.Resize(image, 1920, 1080, imaging.Lanczos)
+
+	err = imaging.Save(resized, resizedFilePath)
+	if err != nil {
+		log.Fatalf("Error while saving image file: %v", err)
+	}
 }
