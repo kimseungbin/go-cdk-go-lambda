@@ -1,6 +1,8 @@
 # Image Resizer
 
-This CDK deploys stacks that resize images to FHD resolution. It requires two ARNs of S3 buckets. When a file is added to the original bucket, an event notification is triggered, which then invokes the resizer Lambda function. Subsequently, the resizer Lambda function uploads the resized image to the corresponding directory in the resized bucket.
+This CDK app deploys stacks that resize images to FHD resolution. It requires two ARNs of S3 buckets. When a file is added to the original bucket, an event notification is triggered, which then invokes the resizer Lambda function. Subsequently, the resizer Lambda function uploads the resized image to the corresponding directory in the resized bucket.
+
+It's important to note that this CDK app assumes the presence of two existing S3 buckets as it was originally designed to be incorporated into an already deployed CloudFormation stack. If it were to operate independently, then `Bucket_FromBucketArn` method must be changed to `NewBucket` method. This adjustment would allow you to create new S3 buckets directly within the CDK app, ensuring it operates independently without dependencies on pre-existing infrastructure.
 
 
 
