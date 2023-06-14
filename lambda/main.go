@@ -102,7 +102,7 @@ func resize() {
 		log.Fatalf("Error while loading image file: %v", err)
 	}
 
-	resized := imaging.Resize(image, 1920, 1080, imaging.Lanczos)
+	resized := imaging.Resize(image, 1600, 1200, imaging.Lanczos)
 
 	err = imaging.Save(resized, resizedFilePath)
 	if err != nil {
